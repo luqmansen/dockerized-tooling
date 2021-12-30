@@ -6,7 +6,7 @@ on:
       - 'main'
 
 jobs:
-  alpine-ffmpeg-mp4box:
+  docker-mockgen-build:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@master

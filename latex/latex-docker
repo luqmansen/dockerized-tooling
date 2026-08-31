@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Transparent wrapper that runs a TeX Live toolchain command inside the
+# `latex` Docker image, with the current directory mounted at /tmp so the
+# tool reads and writes files in the directory you invoke it from.
+#
+# Installed on PATH under the real tool names (pdflatex, latexmk, biber, ...)
+# via symlinks to this script, so `pdflatex sample.tex` just works.
+set -euo pipefail
+
+# Image to run. Defaults to a locally built `latex`; override with LATEX_IMAGE,
+# e.g. LATEX_IMAGE=luqmansen/docker-latex:latest to use the published image.
+image="${LATEX_IMAGE:-latex}"
+
+# The tool to run is this script's own name, unless it was called directly
+# as `latex-docker <tool> [args...]`.
+tool=$(basename "$0")
+if [ "$tool" = "latex-docker" ]; then
+  if [ "$#" -eq 0 ]; then
+    echo "usage: latex-docker <tool> [args...]   (e.g. latex-docker pdflatex sample.tex)" >&2
+    exit 2
+  fi
+  tool=$1
+  shift
+fi
+
+# Allocate a TTY only when running interactively.
+tty_flag=()
+if [ -t 0 ] && [ -t 1 ]; then
+  tty_flag=(-t)
+fi
+
+# Neutralize a global DOCKER_DEFAULT_PLATFORM (e.g. linux/amd64 from ~/.zshrc).
+# Otherwise Docker looks for a variant of the image we never built and tries to
+# pull the nonexistent `latex` repo, failing with "pull access denied". Unset
+# lets Docker use this host's native platform, which matches our local image.
+unset DOCKER_DEFAULT_PLATFORM
+
+# Mount the current directory at the SAME path inside the container and run
+# there, so absolute host paths (e.g. the ones editors and latexmk pass) refer
+# to the exact same files inside the container. This lets the dockerized tools
+# behave like native binaries instead of needing every path rewritten to /tmp.
+exec docker run --rm -i ${tty_flag[@]+"${tty_flag[@]}"} \
+  -v "$PWD:$PWD" \
+  -w "$PWD" \
+  "$image" "$tool" "$@"

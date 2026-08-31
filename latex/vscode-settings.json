@@ -1,0 +1,34 @@
+{
+  // LaTeX Workshop (james-yu.latex-workshop) recipe that builds via the
+  // dockerized `latexmk`. Drop these keys into your VS Code user settings
+  // (or a workspace .vscode/settings.json) after installing the `latex-docker`
+  // wrapper on your PATH as `latexmk` (see latex/latex-docker and the README).
+  //
+  // The wrapper mounts the working directory at the same path inside the
+  // container, so %DOC% / %OUTDIR% (absolute host paths) resolve natively and
+  // SyncTeX forward/reverse search works. Keep LaTeX Workshop's own docker
+  // mode OFF so it does not double-wrap the command.
+  "latex-workshop.docker.enabled": false,
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk-docker",
+      "command": "latexmk",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-pdf",
+        "-outdir=%OUTDIR%",
+        "%DOC%"
+      ],
+      "env": {}
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk-docker",
+      "tools": ["latexmk-docker"]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "latexmk-docker"
+}
